@@ -299,9 +299,12 @@ class StatCanExplorer {
         this.showLoading(true);
         this.hideEmptyState();
 
-        const periods = parseInt(document.getElementById('periods-input').value) || 12;
+        const periods = parseInt(document.getElementById('periods-input')?.value) || 12;
+        
+        // Format request data according to Statistics Canada API specification
+        // API expects: [{"vectorId":32164132, "latestN":3}]
         const requestData = Array.from(this.selectedVectors.keys()).map(vectorId => ({
-            vectorId: vectorId,
+            vectorId: parseInt(vectorId.replace('v', '')), // Convert "v111908552" to 111908552
             latestN: periods
         }));
 
