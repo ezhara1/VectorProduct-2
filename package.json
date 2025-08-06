@@ -1,0 +1,25 @@
+{
+  "name": "vega-js-stylish-redesign",
+  "version": "1.0.0",
+  "description": "Stylish redesign of Vega-JS Statistics Canada Data Visualizer with Netlify Functions",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "statistics-canada",
+    "data-visualization",
+    "vega-lite",
+    "netlify-functions"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

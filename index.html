@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Canada Data Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Vega and Vega-Lite libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-chart-line logo-icon"></i>
+                    <h1>Statistics Canada Explorer</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="help-btn">
+                        <i class="fas fa-question-circle"></i>
+                        Help
+                    </button>
+                    <button class="btn btn-outline" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-content">
+                    <!-- Product Explorer Section -->
+                    <div class="section">
+                        <div class="section-header">
+                            <i class="fas fa-database"></i>
+                            <h2>Product Explorer</h2>
+                            <button class="btn-icon" id="refresh-products" title="Refresh Products">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="search-container">
+                            <input type="text" id="product-search" placeholder="Search products..." class="search-input">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        
+                        <div class="product-list" id="product-list">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Selected Vectors Section -->
+                    <div class="section">
+                        <div class="section-header">
+                            <i class="fas fa-layer-group"></i>
+                            <h2>Selected Vectors</h2>
+                            <span class="vector-count" id="vector-count">0</span>
+                        </div>
+                        
+                        <div class="selected-vectors" id="selected-vectors">
+                            <div class="empty-state">
+                                <i class="fas fa-plus-circle"></i>
+                                <p>Select vectors from products above</p>
+                            </div>
+                        </div>
+                        
+                        <div class="vector-actions">
+                            <button class="btn btn-primary" id="fetch-data" disabled>
+                                <i class="fas fa-download"></i>
+                                Fetch Data
+                            </button>
+                            <button class="btn btn-outline" id="clear-vectors">
+                                <i class="fas fa-trash"></i>
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Controls -->
+                    <div class="section">
+                        <div class="section-header">
+                            <i class="fas fa-chart-bar"></i>
+                            <h2>Visualization</h2>
+                        </div>
+                        
+                        <div class="viz-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <div class="chart-type-buttons">
+                                    <button class="chart-btn active" data-type="line" title="Line Chart">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="chart-btn" data-type="scatter" title="Scatter Plot">
+                                        <i class="fas fa-braille"></i>
+                                    </button>
+                                    <button class="chart-btn" data-type="bar" title="Bar Chart">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </button>
+                                    <button class="chart-btn" data-type="table" title="Data Table">
+                                        <i class="fas fa-table"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group" id="periods-control">
+                                <label for="periods-input">Data Periods</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="periods-input" min="1" max="100" value="12" class="number-input">
+                                    <span class="input-unit">periods</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart-specific options will be inserted here -->
+                            <div id="chart-options"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item active">Dashboard</span>
+                    </div>
+                    <div class="content-actions">
+                        <button class="btn btn-outline" id="export-btn" disabled>
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                        <button class="btn btn-outline" id="fullscreen-btn">
+                            <i class="fas fa-expand"></i>
+                            Fullscreen
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-container" id="loading-container">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Loading data...</p>
+                    </div>
+                </div>
+
+                <!-- Visualization Container -->
+                <div class="visualization-container" id="visualization-container">
+                    <div class="chart-header" id="chart-header">
+                        <h3 id="chart-title">Select vectors to visualize data</h3>
+                        <div class="chart-meta" id="chart-meta"></div>
+                    </div>
+                    
+                    <div class="chart-wrapper">
+                        <div id="visualization" class="chart-area"></div>
+                        <div id="table-container" class="table-container hidden"></div>
+                    </div>
+                    
+                    <div class="chart-footer">
+                        <div class="chart-controls">
+                            <button class="btn-icon" id="zoom-reset" title="Reset Zoom" disabled>
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn-icon" id="pan-toggle" title="Toggle Pan" disabled>
+                                <i class="fas fa-hand-paper"></i>
+                            </button>
+                        </div>
+                        <div class="chart-info">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Click and drag to zoom, double-click to reset
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state-container" id="empty-state">
+                    <div class="empty-state-content">
+                        <i class="fas fa-chart-area empty-icon"></i>
+                        <h3>Ready to Explore Data</h3>
+                        <p>Select products and vectors from the sidebar to start visualizing real Statistics Canada data.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="vector-details-modal">
+            <div class="modal-header">
+                <h3>Vector Details</h3>
+                <button class="btn-icon modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="vector-details-content">
+                <!-- Vector details content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
