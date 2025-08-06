@@ -470,10 +470,18 @@ class StatCanExplorer {
     // Use vector descriptions from data.json as fallback
     useVectorDescriptionsAsFallback() {
         Array.from(this.selectedVectors.values()).forEach(vector => {
-            this.seriesInfo[vector.vectorId] = {
+            // Store series info using both string and integer vector IDs for compatibility
+            const vectorIdStr = vector.vectorId; // e.g., "v111908552"
+            const vectorIdInt = parseInt(vectorIdStr.replace('v', '')); // e.g., 111908552
+            
+            const seriesData = {
                 title: vector.text,
                 description: vector.text
             };
+            
+            // Store under both formats to ensure lookup works
+            this.seriesInfo[vectorIdStr] = seriesData; // "v111908552"
+            this.seriesInfo[vectorIdInt] = seriesData; // 111908552
         });
     }
 
