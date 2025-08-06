@@ -35,81 +35,188 @@ class StatCanExplorer {
         productList.innerHTML = '';
 
         this.products.forEach(product => {
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            productCard.innerHTML = `
-                <div class="product-header" onclick="window.statCanExplorer.toggleProduct('${product.productId}')">
-                    <h3>${product.productId}</h3>
-                    <p>${product.description}</p>
-                    <i class="fas fa-chevron-down toggle-icon" id="toggle-${product.productId}"></i>
-                </div>
-                <div class="product-vectors" id="vectors-${product.productId}" style="display: none;">
-                    ${product.vectors.map(vector => `
-                        <div class="vector-item">
-                            <span class="vector-text">${vector.text}</span>
-                            <button class="btn btn-sm btn-outline vector-btn" 
-                                    onclick="window.statCanExplorer.toggleVector('${vector.vectorId}', '${product.productId}', '${vector.text.replace(/'/g, '&apos;')}')">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            productList.appendChild(productCard);
+            const productItem = document.createElement('div');
+            productItem.className = 'product-item';
+            productItem.id = `product-${product.productId}`;
+            
+            // Create product header
+            const productHeader = document.createElement('div');
+            productHeader.className = 'product-header';
+            productHeader.onclick = () => this.toggleProduct(product.productId);
+            
+            // Create product ID element
+            const productId = document.createElement('span');
+            productId.className = 'product-id';
+            productId.textContent = product.productId;
+            
+            // Create product title element
+            const productTitle = document.createElement('span');
+            productTitle.className = 'product-title';
+            productTitle.textContent = product.description;
+            
+            // Create expand icon
+            const expandIcon = document.createElement('i');
+            expandIcon.className = 'fas fa-chevron-right expand-icon';
+            expandIcon.id = `toggle-${product.productId}`;
+            
+            productHeader.appendChild(productId);
+            productHeader.appendChild(productTitle);
+            productHeader.appendChild(expandIcon);
+            
+            // Create vectors container
+            const vectorsContainer = document.createElement('div');
+            vectorsContainer.className = 'vector-list';
+            vectorsContainer.id = `vectors-${product.productId}`;
+            vectorsContainer.style.display = 'none';
+            
+            // Add vectors
+            product.vectors.forEach(vector => {
+                const vectorItem = document.createElement('div');
+                vectorItem.className = 'vector-item';
+                
+                const vectorText = document.createElement('span');
+                vectorText.className = 'vector-text';
+                vectorText.textContent = vector.text;
+                
+                const vectorBtn = document.createElement('button');
+                vectorBtn.className = 'btn btn-sm btn-outline vector-btn';
+                vectorBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                vectorBtn.onclick = () => {
+                    console.log('Vector button clicked:', vector.vectorId, product.productId, vector.text);
+                    this.toggleVector(vector.vectorId, product.productId, vector.text);
+                };
+                
+                vectorItem.appendChild(vectorText);
+                vectorItem.appendChild(vectorBtn);
+                vectorsContainer.appendChild(vectorItem);
+            });
+            
+            productItem.appendChild(productHeader);
+            productItem.appendChild(vectorsContainer);
+            productList.appendChild(productItem);
         });
     }
 
     // Toggle product expansion
     toggleProduct(productId) {
-        const vectorsDiv = document.getElementById(`vectors-${productId}`);
+        const productItem = document.getElementById(`product-${productId}`);
+        const vectorsList = document.getElementById(`vectors-${productId}`);
         const toggleIcon = document.getElementById(`toggle-${productId}`);
         
-        if (vectorsDiv.style.display === 'none') {
-            vectorsDiv.style.display = 'block';
-            toggleIcon.style.transform = 'rotate(180deg)';
+        console.log('Toggling product:', productId);
+        
+        if (vectorsList.style.display === 'none') {
+            vectorsList.style.display = 'block';
+            productItem.classList.add('expanded');
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-down');
         } else {
-            vectorsDiv.style.display = 'none';
-            toggleIcon.style.transform = 'rotate(0deg)';
+            vectorsList.style.display = 'none';
+            productItem.classList.remove('expanded');
+            toggleIcon.classList.remove('fa-chevron-down');
+            toggleIcon.classList.add('fa-chevron-right');
         }
     }
 
     // Toggle vector selection
     toggleVector(vectorId, productId, text) {
+        console.log('toggleVector called with:', { vectorId, productId, text });
+        console.log('Current selectedVectors size:', this.selectedVectors.size);
+        
         if (this.selectedVectors.has(vectorId)) {
             this.selectedVectors.delete(vectorId);
+            console.log('Removed vector:', vectorId);
             this.showToast(`Removed vector ${vectorId}`, 'info');
         } else {
             this.selectedVectors.set(vectorId, { vectorId, productId, text });
+            console.log('Added vector:', vectorId, 'Total vectors now:', this.selectedVectors.size);
             this.showToast(`Added vector ${vectorId}`, 'success');
         }
         
+        console.log('Updating selected vectors list...');
         this.updateSelectedVectorsList();
+        console.log('Updating vector buttons...');
         this.updateVectorButtons();
     }
 
     // Update selected vectors display
     updateSelectedVectorsList() {
-        const selectedList = document.getElementById('selected-vectors-list');
+        console.log('updateSelectedVectorsList called, selectedVectors size:', this.selectedVectors.size);
+        
+        const selectedList = document.getElementById('selected-vectors');
+        if (!selectedList) {
+            console.error('selected-vectors element not found!');
+            return;
+        }
+        
+        // Clear the container and remove empty state
         selectedList.innerHTML = '';
+        console.log('Cleared selected list, adding vectors...');
 
-        this.selectedVectors.forEach((vector, vectorId) => {
-            const vectorItem = document.createElement('div');
-            vectorItem.className = 'selected-vector-item';
-            vectorItem.innerHTML = `
-                <div class="vector-info">
-                    <strong>${vectorId}</strong>
-                    <span>${vector.text}</span>
+        if (this.selectedVectors.size === 0) {
+            // Show empty state when no vectors selected
+            selectedList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-plus-circle"></i>
+                    <p>Select vectors from products above</p>
                 </div>
-                <button class="btn btn-sm btn-danger" onclick="window.statCanExplorer.removeVector('${vectorId}')">
-                    <i class="fas fa-times"></i>
-                </button>
             `;
-            selectedList.appendChild(vectorItem);
-        });
+        } else {
+            // Add selected vectors
+            this.selectedVectors.forEach((vector, vectorId) => {
+                console.log('Adding vector to list:', vectorId, vector);
+                const vectorItem = document.createElement('div');
+                vectorItem.className = 'selected-vector-item';
+                
+                // Create vector info div
+                const vectorInfo = document.createElement('div');
+                vectorInfo.className = 'vector-info';
+                
+                const vectorIdSpan = document.createElement('div');
+                vectorIdSpan.className = 'vector-id-display';
+                vectorIdSpan.textContent = vectorId;
+                
+                const vectorTextSpan = document.createElement('div');
+                vectorTextSpan.className = 'vector-description';
+                vectorTextSpan.textContent = vector.text;
+                
+                vectorInfo.appendChild(vectorIdSpan);
+                vectorInfo.appendChild(vectorTextSpan);
+                
+                // Create remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-sm btn-danger';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => this.removeVector(vectorId);
+                
+                vectorItem.appendChild(vectorInfo);
+                vectorItem.appendChild(removeBtn);
+                selectedList.appendChild(vectorItem);
+            });
+        }
 
         // Update counter
-        const counter = document.getElementById('selected-count');
-        counter.textContent = this.selectedVectors.size;
+        const counter = document.getElementById('vector-count');
+        if (counter) {
+            counter.textContent = this.selectedVectors.size;
+            console.log('Updated counter to:', this.selectedVectors.size);
+        } else {
+            console.error('vector-count element not found!');
+        }
+        
+        // Enable/disable fetch data button based on selection
+        const fetchButton = document.getElementById('fetch-data');
+        if (fetchButton) {
+            if (this.selectedVectors.size > 0) {
+                fetchButton.disabled = false;
+                fetchButton.classList.remove('disabled');
+                console.log('Enabled fetch data button');
+            } else {
+                fetchButton.disabled = true;
+                fetchButton.classList.add('disabled');
+                console.log('Disabled fetch data button');
+            }
+        }
     }
 
     // Remove vector from selection
@@ -123,15 +230,25 @@ class StatCanExplorer {
     // Update vector button states
     updateVectorButtons() {
         document.querySelectorAll('.vector-btn').forEach(btn => {
-            const vectorId = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-            const icon = btn.querySelector('i');
+            // Find the vector ID by looking at the parent vector item
+            const vectorItem = btn.closest('.vector-item');
+            if (!vectorItem) return;
             
-            if (this.selectedVectors.has(vectorId)) {
-                btn.className = 'btn btn-sm btn-primary vector-btn';
-                icon.className = 'fas fa-check';
-            } else {
-                btn.className = 'btn btn-sm btn-outline vector-btn';
-                icon.className = 'fas fa-plus';
+            // Get vector ID from the button's onclick function
+            const onclickStr = btn.onclick.toString();
+            const vectorIdMatch = onclickStr.match(/toggleVector\(["']([^"']+)["']/); 
+            
+            if (vectorIdMatch) {
+                const vectorId = vectorIdMatch[1];
+                const icon = btn.querySelector('i');
+                
+                if (this.selectedVectors.has(vectorId)) {
+                    btn.className = 'btn btn-sm btn-primary vector-btn';
+                    icon.className = 'fas fa-check';
+                } else {
+                    btn.className = 'btn btn-sm btn-outline vector-btn';
+                    icon.className = 'fas fa-plus';
+                }
             }
         });
     }
@@ -139,12 +256,12 @@ class StatCanExplorer {
     // Setup event listeners
     setupEventListeners() {
         // Fetch data button
-        document.getElementById('fetch-btn').addEventListener('click', () => {
+        document.getElementById('fetch-data').addEventListener('click', () => {
             this.fetchData();
         });
 
         // Clear selection button
-        document.getElementById('clear-btn').addEventListener('click', () => {
+        document.getElementById('clear-vectors').addEventListener('click', () => {
             this.clearSelection();
         });
 
@@ -679,7 +796,11 @@ class StatCanExplorer {
     // Show/hide loading state
     showLoading(show) {
         const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = show ? 'flex' : 'none';
+        if (loadingOverlay) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        } else {
+            console.log('Loading overlay element not found, skipping loading state');
+        }
     }
 
     // Show/hide empty state
@@ -687,13 +808,26 @@ class StatCanExplorer {
         const emptyState = document.getElementById('empty-state');
         const visualizationContainer = document.getElementById('visualization-container');
         
-        emptyState.style.display = 'flex';
-        visualizationContainer.style.display = 'none';
+        if (emptyState) {
+            emptyState.style.display = 'flex';
+        } else {
+            console.log('Empty state element not found');
+        }
+        
+        if (visualizationContainer) {
+            visualizationContainer.style.display = 'none';
+        } else {
+            console.log('Visualization container element not found');
+        }
     }
 
     hideEmptyState() {
         const emptyState = document.getElementById('empty-state');
-        emptyState.style.display = 'none';
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        } else {
+            console.log('Empty state element not found');
+        }
     }
 
     // Show CORS limitation dialog with explanation
