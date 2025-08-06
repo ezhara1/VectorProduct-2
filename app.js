@@ -527,6 +527,10 @@ class StatCanExplorer {
 
         // Render the visualization
         const container = document.getElementById('vega-container');
+        if (!container) {
+            console.log('Vega container element not found, skipping visualization rendering');
+            return;
+        }
         container.innerHTML = '';
         
         vegaEmbed(container, vegaSpec, {
@@ -666,6 +670,10 @@ class StatCanExplorer {
     // Generate table view
     generateTableView() {
         const tableContainer = document.getElementById('table-container');
+        if (!tableContainer) {
+            console.log('Table container element not found, skipping table generation');
+            return;
+        }
         
         if (!this.fetchedData || this.fetchedData.length === 0) {
             tableContainer.innerHTML = '<p>No data available</p>';
