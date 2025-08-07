@@ -32,6 +32,10 @@ class StatCanExplorer {
     // Render product list in sidebar
     renderProductList() {
         const productList = document.getElementById('product-list');
+        if (!productList) {
+            console.error('product-list element not found');
+            return;
+        }
         productList.innerHTML = '';
 
         this.products.forEach(product => {
@@ -102,6 +106,11 @@ class StatCanExplorer {
         const productItem = document.getElementById(`product-${productId}`);
         const vectorsList = document.getElementById(`vectors-${productId}`);
         const toggleIcon = document.getElementById(`toggle-${productId}`);
+        
+        if (!productItem || !vectorsList || !toggleIcon) {
+            console.error('Required elements not found for product:', productId);
+            return;
+        }
         
         console.log('Toggling product:', productId);
         
@@ -256,37 +265,69 @@ class StatCanExplorer {
     // Setup event listeners
     setupEventListeners() {
         // Fetch data button
-        document.getElementById('fetch-data').addEventListener('click', () => {
-            this.fetchData();
-        });
+        const fetchDataBtn = document.getElementById('fetch-data');
+        if (fetchDataBtn) {
+            fetchDataBtn.addEventListener('click', () => {
+                this.fetchData();
+            });
+        } else {
+            console.warn('fetch-data button not found');
+        }
 
         // Clear selection button
-        document.getElementById('clear-vectors').addEventListener('click', () => {
-            this.clearSelection();
-        });
+        const clearVectorsBtn = document.getElementById('clear-vectors');
+        if (clearVectorsBtn) {
+            clearVectorsBtn.addEventListener('click', () => {
+                this.clearSelection();
+            });
+        } else {
+            console.warn('clear-vectors button not found');
+        }
 
         // Visualization type buttons
-        document.querySelectorAll('.viz-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const vizType = e.target.closest('.viz-btn').dataset.viz;
-                this.setVisualizationType(vizType);
+        const vizBtns = document.querySelectorAll('.viz-btn');
+        if (vizBtns.length > 0) {
+            vizBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const vizBtn = e.target.closest('.viz-btn');
+                    if (vizBtn && vizBtn.dataset.viz) {
+                        this.setVisualizationType(vizBtn.dataset.viz);
+                    }
+                });
             });
-        });
+        } else {
+            console.warn('No visualization buttons found');
+        }
 
         // Export button
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.exportData();
-        });
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        } else {
+            console.warn('export-btn button not found');
+        }
 
         // Fullscreen button
-        document.getElementById('fullscreen-btn').addEventListener('click', () => {
-            this.toggleFullscreen();
-        });
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => {
+                this.toggleFullscreen();
+            });
+        } else {
+            console.warn('fullscreen-btn button not found');
+        }
 
         // Search functionality
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            this.searchProducts(e.target.value);
-        });
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchProducts(e.target.value);
+            });
+        } else {
+            console.warn('product-search input not found');
+        }
     }
 
     // Fetch data from Statistics Canada API via Netlify Functions
@@ -793,6 +834,11 @@ class StatCanExplorer {
     toggleFullscreen() {
         const container = document.getElementById('visualization-container');
         
+        if (!container) {
+            console.warn('Visualization container not found for fullscreen');
+            return;
+        }
+        
         if (!document.fullscreenElement) {
             container.requestFullscreen().catch(err => {
                 console.error('Error attempting to enable fullscreen:', err);
@@ -805,6 +851,10 @@ class StatCanExplorer {
     // Update chart metadata display
     updateChartMeta() {
         const chartMeta = document.getElementById('chart-meta');
+        if (!chartMeta) {
+            console.warn('chart-meta element not found');
+            return;
+        }
         if (this.cubeMetadata && this.cubeMetadata.cubeTitleEn) {
             chartMeta.textContent = this.cubeMetadata.cubeTitleEn;
         } else {
@@ -814,11 +864,20 @@ class StatCanExplorer {
 
     // Show/hide loading state
     showLoading(show) {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = show ? 'flex' : 'none';
+        const loadingContainer = document.getElementById('loading-container');
+        const visualizationContainer = document.getElementById('visualization-container');
+        
+        if (!loadingContainer || !visualizationContainer) {
+            console.warn('Loading or visualization container elements not found');
+            return;
+        }
+        
+        if (show) {
+            loadingContainer.classList.add('active');
+            visualizationContainer.style.display = 'none';
         } else {
-            console.log('Loading overlay element not found, skipping loading state');
+            loadingContainer.classList.remove('active');
+            visualizationContainer.style.display = 'flex';
         }
     }
 
@@ -827,16 +886,11 @@ class StatCanExplorer {
         const emptyState = document.getElementById('empty-state');
         const visualizationContainer = document.getElementById('visualization-container');
         
-        if (emptyState) {
+        if (emptyState && visualizationContainer) {
             emptyState.style.display = 'flex';
-        } else {
-            console.log('Empty state element not found');
-        }
-        
-        if (visualizationContainer) {
             visualizationContainer.style.display = 'none';
         } else {
-            console.log('Visualization container element not found');
+            console.warn('Empty state or visualization container elements not found');
         }
     }
 
@@ -845,7 +899,7 @@ class StatCanExplorer {
         if (emptyState) {
             emptyState.style.display = 'none';
         } else {
-            console.log('Empty state element not found');
+            console.warn('Empty state element not found');
         }
     }
 
@@ -918,7 +972,16 @@ class StatCanExplorer {
 
     // Reset empty state to original content
     resetEmptyState() {
-        const emptyStateContent = document.getElementById('empty-state').querySelector('.empty-state-content');
+        const emptyState = document.getElementById('empty-state');
+        if (!emptyState) {
+            console.warn('Empty state element not found');
+            return;
+        }
+        const emptyStateContent = emptyState.querySelector('.empty-state-content');
+        if (!emptyStateContent) {
+            console.warn('Empty state content element not found');
+            return;
+        }
         emptyStateContent.innerHTML = `
             <i class="fas fa-chart-area empty-icon"></i>
             <h3>Ready to Explore Data</h3>
@@ -928,33 +991,50 @@ class StatCanExplorer {
 
     // Modal functions
     closeModal() {
-        document.getElementById('modal-overlay').classList.remove('active');
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.classList.remove('active');
+        } else {
+            console.warn('Modal overlay element not found');
+        }
     }
 
     // Toast notification system
     showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        const icon = type === 'success' ? 'check-circle' : 
-                    type === 'error' ? 'exclamation-circle' : 
-                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-        
-        toast.innerHTML = `
-            <i class="fas fa-${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        // Trigger animation
-        setTimeout(() => toast.classList.add('show'), 100);
-        
-        // Remove toast after 3 seconds
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => document.body.removeChild(toast), 300);
-        }, 3000);
+        try {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-circle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            toast.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            if (document.body) {
+                document.body.appendChild(toast);
+                
+                // Trigger animation
+                setTimeout(() => toast.classList.add('show'), 100);
+                
+                // Remove toast after 3 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }, 3000);
+            } else {
+                console.warn('Document body not available for toast notification');
+            }
+        } catch (error) {
+            console.error('Error showing toast notification:', error);
+        }
     }
 }
 
