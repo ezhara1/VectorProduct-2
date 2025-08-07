@@ -8,9 +8,7 @@
     "build": "echo 'No build step required for static site'",
     "deploy": "netlify deploy --prod"
   },
-  "dependencies": {
-    "node-fetch": "^2.6.7"
-  },
+  "dependencies": {},
   "devDependencies": {
     "netlify-cli": "^17.0.0"
   },
