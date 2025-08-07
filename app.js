@@ -344,18 +344,24 @@ class StatCanExplorer {
         
         // Format request data according to Statistics Canada API specification
         // API expects: [{"vectorId":32164132, "latestN":3}]
-        const requestData = Array.from(this.selectedVectors.keys()).map(vectorId => ({
-            vectorId: parseInt(vectorId.replace('v', '')), // Convert "v111908552" to 111908552
-            latestN: periods
-        }));
+        const requestData = Array.from(this.selectedVectors.keys()).map(vectorId => {
+            // Remove 'v' prefix if present and convert to integer
+            const numericId = vectorId.startsWith('v') ? parseInt(vectorId.substring(1)) : parseInt(vectorId);
+            return {
+                vectorId: numericId,
+                latestN: periods
+            };
+        });
 
         try {
             console.log('Attempting to fetch data for vectors:', requestData);
+            console.log('Selected vectors map:', Array.from(this.selectedVectors.entries()));
             
             // Use Netlify Function as API proxy
             const netlifyFunctionUrl = '/.netlify/functions/getDataFromVectors';
             
             console.log('Making request to Netlify Function:', netlifyFunctionUrl);
+            console.log('Request payload:', JSON.stringify(requestData, null, 2));
             
             const response = await fetch(netlifyFunctionUrl, {
                 method: 'POST',
@@ -366,6 +372,9 @@ class StatCanExplorer {
                 body: JSON.stringify(requestData)
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('Netlify Function successful:', data);
@@ -373,15 +382,24 @@ class StatCanExplorer {
                 return;
             } else {
                 const errorText = await response.text();
-                console.error('Netlify Function failed:', response.status, errorText);
+                console.error('Netlify Function failed:', response.status, response.statusText);
+                console.error('Error response body:', errorText);
                 throw new Error(`Netlify Function returned ${response.status}: ${errorText}`);
             }
             
         } catch (error) {
             console.error('Error fetching data from Statistics Canada API:', error);
             
-            // Show the CORS limitation explanation
-            this.showCorsLimitationDialog();
+            // Show specific error message instead of generic CORS dialog
+            if (error.message.includes('404')) {
+                this.showToast('Netlify function not found. Please check deployment.', 'error');
+            } else if (error.message.includes('500')) {
+                this.showToast('Server error occurred. Please try again later.', 'error');
+            } else if (error.message.includes('Failed to fetch')) {
+                this.showToast('Network error. Please check your connection.', 'error');
+            } else {
+                this.showToast(`Data fetch failed: ${error.message}`, 'error');
+            }
             
         } finally {
             this.showLoading(false);
